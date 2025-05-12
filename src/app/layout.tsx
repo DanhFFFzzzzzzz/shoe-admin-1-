@@ -25,25 +25,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" className="light">
       <head>
         <meta charSet="UTF-8" />
         <title>Tiêu đề trang</title>
       </head>
-      <body className="Inter">
-      <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <main>{children}</main>
-            <Toaster richColors />
-          </ThemeProvider>
-        
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-white text-gray-900 antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <main className="relative flex min-h-screen flex-col">
+            <div className="flex-1">{children}</div>
+          </main>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );
-  
 }
 

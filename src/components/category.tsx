@@ -2,10 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import { MoreHorizontal, Calendar, Package, Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Package, Calendar } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -15,13 +14,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 import { TableCell, TableRow } from '@/components/ui/table';
 import { CreateCategorySchema } from '@/app/admin/categories/create-category.schema';
@@ -58,50 +50,56 @@ export const CategoryTableRow = ({
 
   return (
     <>
-      <TableRow className="shadow-md hover:shadow-lg transition-shadow duration-200 rounded-xl bg-white/5 dark:bg-zinc-900/60">
-        <TableCell className="sm:table-cell align-middle">
+      <TableRow className="group hover:bg-primary/5 transition-colors">
+        <TableCell className="py-4 px-6">
           <div className="flex items-center justify-center">
             <Image
-              alt="Category image"
-              className="rounded-xl object-cover border border-zinc-200 dark:border-zinc-800 shadow"
-              height={80}
-              width={80}
+              alt="Hình ảnh danh mục"
+              className="rounded-lg object-cover border border-gray-200 shadow-sm group-hover:shadow-md transition-shadow"
+              height={64}
+              width={64}
               src={category.imageUrl || '/placeholder.jpg'}
             />
           </div>
         </TableCell>
-        <TableCell className="font-bold text-lg align-middle text-primary">
-          {category.name}
+        <TableCell className="py-4 px-6">
+          <span className="font-semibold text-gray-800 text-lg group-hover:text-primary transition-colors">
+            {category.name}
+          </span>
         </TableCell>
-        <TableCell className="md:table-cell align-middle text-zinc-500 flex items-center gap-2">
-          <Calendar className="inline-block mr-1 h-4 w-4 text-zinc-400" />
-          {format(new Date(category.created_at), 'yyyy-MM-dd')}
+        <TableCell className="py-4 px-6">
+          <div className="flex items-center gap-2 text-gray-600 group-hover:text-gray-800 transition-colors">
+            <Calendar className="h-4 w-4 text-primary/60" />
+            {format(new Date(category.created_at), 'dd/MM/yyyy')}
+          </div>
         </TableCell>
-        <TableCell className="md:table-cell align-middle">
+        <TableCell className="py-4 px-6">
           {category.products && category.products.length > 0 ? (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                  <Package className="h-4 w-4 text-green-500" />
+                <button className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
+                  <Package className="h-4 w-4" />
                   <span>{category.products.length} sản phẩm</span>
-                </Button>
+                </button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogTitle className="mb-2">Danh sách sản phẩm</DialogTitle>
-                <ScrollArea className="h-[400px] rounded-md p-4">
+              <DialogContent className="max-w-lg w-full rounded-xl shadow-2xl p-8 bg-white border border-gray-200">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-semibold text-gray-800">Danh Sách Sản Phẩm</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="max-h-[400px] rounded-md p-4">
                   {category.products.map(product => (
-                    <Link key={product.id} href={`/products/${product.id}`} className="block mb-2">
-                      <Card className="cursor-pointer p-2 flex items-center gap-4 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
+                    <Link key={product.id} href={`/products/${product.id}`} className="block mb-4">
+                      <Card className="p-4 flex items-center gap-4 hover:bg-primary/5 transition-colors group">
                         <Image
-                          alt="Product image"
-                          className="rounded-md object-cover border"
+                          alt="Hình ảnh sản phẩm"
+                          className="rounded-md object-cover border border-gray-200 group-hover:border-primary/20 transition-colors"
                           height={48}
                           width={48}
                           src={product.heroImage}
                         />
                         <div className="flex flex-col">
-                          <span className="font-medium text-base">{product.title}</span>
-                          <span className="text-xs text-zinc-500">{product.maxQuantity} sản phẩm trong kho</span>
+                          <span className="font-semibold text-gray-800 group-hover:text-primary transition-colors">{product.title}</span>
+                          <span className="text-sm text-gray-500">{product.maxQuantity} sản phẩm trong kho</span>
                         </div>
                       </Card>
                     </Link>
@@ -110,57 +108,53 @@ export const CategoryTableRow = ({
               </DialogContent>
             </Dialog>
           ) : (
-            <div className="flex items-center gap-2 text-zinc-400 italic">
+            <div className="flex items-center gap-2 text-gray-500">
               <Package className="h-4 w-4" />
               <span>Chưa có sản phẩm</span>
             </div>
           )}
         </TableCell>
-        <TableCell className="align-middle">
-          <div className="flex gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              className="rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+        <TableCell className="py-4 px-6">
+          <div className="flex gap-3 items-center">
+            <button
               onClick={() => handleEditClick(category)}
-              title="Chỉnh sửa"
+              className="p-2 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+              title="Chỉnh sửa danh mục"
             >
-              <Edit2 className="h-4 w-4 text-blue-600" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition"
+              <Edit2 className="h-5 w-5" />
+            </button>
+            <button
               onClick={() => setIsDeleteDialogOpen(true)}
-              title="Xóa"
+              className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
+              title="Xóa danh mục"
             >
-              <Trash2 className="h-4 w-4 text-red-600" />
-            </Button>
+              <Trash2 className="h-5 w-5" />
+            </button>
           </div>
         </TableCell>
       </TableRow>
 
-      <Dialog
-        open={isDeleteDialogOpen}
-        onOpenChange={() => setIsDeleteDialogOpen(!isDeleteDialogOpen)}
-      >
-        <DialogContent>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md w-full rounded-xl shadow-2xl p-8 bg-white border border-gray-200">
           <DialogHeader>
-            <DialogTitle>Bạn chắc chắn muốn xóa?</DialogTitle>
-            <DialogDescription>
-              Hành động này không thể hoàn tác. Danh mục sẽ bị xóa vĩnh viễn.
+            <DialogTitle className="text-xl font-semibold text-gray-800">Xóa Danh Mục</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Bạn có chắc chắn muốn xóa danh mục <span className="font-semibold text-primary">{category.name}</span>? Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
+          <div className="flex justify-end gap-4 mt-6">
+            <button
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Xác nhận xóa
-            </Button>
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Xác Nhận Xóa
+            </button>
           </div>
         </DialogContent>
       </Dialog>

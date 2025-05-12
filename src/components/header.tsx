@@ -28,7 +28,7 @@ const NAV_LINKS = [
 
 export const Header = () => {
   const pathname = usePathname();
-  const { setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
 
@@ -38,22 +38,23 @@ export const Header = () => {
   };
 
   return (
-    <header className='sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6'>
+    <header className='sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 shadow-sm'>
       <nav className='hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6'>
         <Link
           href='/'
-          className='flex items-center gap-2 text-lg font-semibold md:text-base'
+          className='flex items-center gap-2 text-lg font-semibold md:text-base hover:opacity-80 transition-opacity'
         >
-          <Package2 className='h-6 w-6' />
+          <Package2 className='h-6 w-6 text-primary' />
+          <span className="text-primary font-bold">Shoe Store</span>
         </Link>
         {NAV_LINKS.map(({ href, label }) => (
           <Link
             key={href}
             href={href}
             className={cn(
-              'transition-colors hover:text-foreground text-muted-foreground',
+              'transition-all duration-200 hover:text-primary text-muted-foreground',
               {
-                'text-foreground font-bold': pathname === href,
+                'text-primary font-semibold': pathname === href,
               }
             )}
           >
@@ -63,25 +64,26 @@ export const Header = () => {
       </nav>
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant='outline' size='icon' className='shrink-0 md:hidden'>
+          <Button variant='outline' size='icon' className='shrink-0 md:hidden hover:bg-primary/10'>
             <Menu className='h-5 w-5' />
             <span className='sr-only'>Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side='left'>
+        <SheetContent side='left' className="w-[300px] sm:w-[400px]">
           <nav className='grid gap-6 text-lg font-medium'>
             <Link
               href='/'
-              className='flex items-center gap-2 text-lg font-semibold'
+              className='flex items-center gap-2 text-lg font-semibold hover:opacity-80 transition-opacity'
             >
-              <Package2 className='h-6 w-6' />
+              <Package2 className='h-6 w-6 text-primary' />
+              <span className="text-primary font-bold">Shoe Store</span>
             </Link>
             {NAV_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={cn('hover:text-foreground text-muted-foreground', {
-                  'text-foreground font-bold': pathname === href,
+                className={cn('transition-all duration-200 hover:text-primary text-muted-foreground', {
+                  'text-primary font-semibold': pathname === href,
                 })}
               >
                 {label}
@@ -97,43 +99,48 @@ export const Header = () => {
             <Input
               type='search'
               placeholder='Search products...'
-              className='pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]'
+              className='pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] focus-visible:ring-primary'
             />
           </div>
         </form>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='secondary' size='icon' className='rounded-full'>
+            <Button variant='secondary' size='icon' className='rounded-full hover:bg-primary/10'>
               <CircleUser className='h-5 w-5' />
               <span className='sr-only'>Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
+          <DropdownMenuContent align='end' className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              Logout
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className='w-full' variant='outline' size='icon'>
-                    <Sun className='h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
-                    <Moon className='absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
-                    <span className='sr-only'>Toggle theme</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                  <DropdownMenuItem onClick={() => setTheme('light')}>
-                    Light
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme('dark')}>
-                    Dark
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme('system')}>
-                    System
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center justify-between">
+                <span>Theme</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='outline' size='icon' className="h-8 w-8">
+                      <Sun className='h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
+                      <Moon className='absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
+                      <span className='sr-only'>Toggle theme</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end'>
+                    <DropdownMenuItem onClick={() => setTheme('light')} className={cn(theme === 'light' && 'bg-primary/10 text-primary')}>
+                      Light
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme('dark')} className={cn(theme === 'dark' && 'bg-primary/10 text-primary')}>
+                      Dark
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme('system')} className={cn(theme === 'system' && 'bg-primary/10 text-primary')}>
+                      System
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
