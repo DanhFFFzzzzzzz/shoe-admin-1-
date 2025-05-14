@@ -35,7 +35,10 @@ export const imageUploadHandler = async (formData: FormData) => {
 
   if (!(fileEntry instanceof File)) throw new Error('Expected a file');
 
-  const fileName = fileEntry.name;
+  const ext = fileEntry.name.split('.').pop();
+  const baseName = fileEntry.name.replace(/\.[^/.]+$/, '');
+  const safeName = slugify(baseName, { lower: true, strict: true });
+  const fileName = `${safeName}-${Date.now()}.${ext}`;
 
   try {
     const { data, error } = await supabase.storage

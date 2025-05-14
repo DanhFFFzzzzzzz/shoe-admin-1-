@@ -65,6 +65,20 @@ export const createProduct = async ({
   const supabase = createClient();
   const slug = slugify(title, { lower: true });
 
+  // Kiểm tra trùng lặp title
+  const { data: existing, error: checkError } = await supabase
+    .from('product')
+    .select('id')
+    .eq('title', title)
+    .single();
+
+  if (checkError && checkError.code !== 'PGRST116') {
+    throw new Error(`Lỗi kiểm tra tên sản phẩm: ${checkError.message}`);
+  }
+  if (existing) {
+    throw new Error('Tên sản phẩm đã tồn tại, vui lòng chọn tên khác.');
+  }
+
   // 1. Insert product
   const { data: productData, error: productError } = await supabase
     .from('product')
