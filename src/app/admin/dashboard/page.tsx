@@ -1,12 +1,14 @@
-import { getMonthlyOrders } from '@/actions/order';
-import { getCategoryData } from '@/actions/categories';
-import { getLatestUsers } from '@/actions/auth';
+import { getMonthlyOrders } from '@/server/actions/order';
+import { getCategoryData } from '@/server/actions/categories';
+import { getLatestUsers } from '@/server/actions/auth';
 import PageComponent from './page-component';
 
 export default async function AdminDashboard() {
-  const monthlyOrders = await getMonthlyOrders();
-  const categoryData = await getCategoryData();
-  const latestUsers = await getLatestUsers();
+  const [monthlyOrders, categoryData, latestUsers] = await Promise.all([
+    getMonthlyOrders(),
+    getCategoryData(),
+    getLatestUsers(),
+  ]);
 
   return (
     <PageComponent

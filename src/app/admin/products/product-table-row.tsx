@@ -45,7 +45,7 @@ export const ProductTableRow = ({
       <TableCell className='py-3 px-4 text-blue-700 dark:text-blue-300 font-medium'>{product.price?.toLocaleString()}₫</TableCell>
       <TableCell className='py-3 px-4'>{product.maxQuantity}</TableCell>
       <TableCell className='py-3 px-4 max-w-xs truncate'>{product.description}</TableCell>
-      <TableCell className='py-3 px-4'>{product.sizes && product.sizes.length > 0 ? product.sizes.join(', ') : '-'}</TableCell>
+      <TableCell className='py-3 px-4'>{product.sizes && product.sizes.length > 0 ? product.sizes.map(sz => `${sz.size}: ${sz.quantity}`).join(', ') : '-'}</TableCell>
       <TableCell className='py-3 px-4'>
         {product.heroImage && (
           <Image

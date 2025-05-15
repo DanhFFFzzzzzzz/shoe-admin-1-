@@ -10,19 +10,20 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        async get(name: string) {
+          const cookie = await cookieStore.get(name);
+          return cookie?.value;
         },
-        set(name: string, value: string, options: any) {
+        async set(name: string, value: string, options: any) {
           try {
-            cookieStore.set(name, value, options);
+            await cookieStore.set(name, value, options);
           } catch (error) {
             // Handle cookie errors
           }
         },
-        remove(name: string, options: any) {
+        async remove(name: string, options: any) {
           try {
-            cookieStore.set(name, '', { ...options, maxAge: 0 });
+            await cookieStore.set(name, '', { ...options, maxAge: 0 });
           } catch (error) {
             // Handle cookie errors
           }
@@ -30,4 +31,4 @@ export async function createClient() {
       },
     }
   );
-} 
+}

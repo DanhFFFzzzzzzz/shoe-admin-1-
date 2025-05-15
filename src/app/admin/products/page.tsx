@@ -1,15 +1,10 @@
-import { getCategoriesWithProducts } from '@/actions/categories';
-import { getProductsWithCategories } from '@/actions/products';
-import { ProductPageComponent } from '@/app/admin/products/page-component';
+import { getProductsWithCategories } from '@/server/actions/products';
+import { getCategories } from '@/server/actions/categories';
+import PageComponent from './page-component';
 
-export default async function Products() {
-  const categories = await getCategoriesWithProducts();
+export default async function ProductsPage() {
   const productsWithCategories = await getProductsWithCategories();
+  const categories = await getCategories();
 
-  return (
-    <ProductPageComponent
-      categories={categories}
-      productsWithCategories={productsWithCategories}
-    />
-  );
+  return <PageComponent productsWithCategories={productsWithCategories} categories={categories} />;
 }

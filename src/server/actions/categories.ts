@@ -1,29 +1,23 @@
 'use server';
 
 import slugify from 'slugify';
-
-import { CategoriesWithProductsResponse } from '@/app/admin/categories/categories.types';
-import {
-  CreateCategorySchemaServer,
-  UpdateCategorySchema,
-} from '@/app/admin/categories/create-category.schema';
 import { createClient } from '@/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { Tables } from '@/supabase.types';
 
-export const getCategoriesWithProducts =
-  async (): Promise<CategoriesWithProductsResponse> => {
+type Category = Tables<'category'>;
+
+export const getCategoriesWithProducts = async () => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('category')
-      .select('* , products:product(*)')
-      .returns<CategoriesWithProductsResponse>();
+    .select('* , products:product(*)');
 
     if (error) {
       console.error('Error fetching categories:', error);
       throw new Error(`Error fetching categories: ${error.message}`);
     }
 
-    console.log('Fetched categories:', data);
     return data || [];
   };
 
@@ -64,74 +58,80 @@ export const imageUploadHandler = async (formData: FormData) => {
   }
 };
 
-export const createCategory = async ({
-  imageUrl,
-  name,
-}: CreateCategorySchemaServer) => {
+export async function getCategories() {
   const supabase = await createClient();
-  const slug = slugify(name, { lower: true });
 
-  console.log('Creating category with:', { imageUrl, name, slug });
+  const { data: categories, error } = await supabase
+    .from('category')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  const { data, error } = await supabase.from('category').insert({
-    name,
-    imageUrl,
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return categories as Category[];
+}
+
+export async function createCategory(data: { name: string; imageUrl: string; slug?: string }) {
+  const supabase = await createClient();
+  const slug = data.slug || slugify(data.name, { lower: true });
+
+  const { error } = await supabase.from('category').insert({
+    name: data.name,
+    imageUrl: data.imageUrl,
     slug,
   });
 
   if (error) {
-    console.error('Error creating category:', error);
-    throw new Error(`Error creating category: ${error.message}`);
+    throw new Error(error.message);
   }
 
-  console.log('Category created successfully:', data);
-
   revalidatePath('/admin/categories');
+}
 
-  return data;
-};
-
-export const updateCategory = async ({
-  imageUrl,
-  name,
-  slug,
-}: UpdateCategorySchema) => {
+export async function updateCategory(categoryId: string, data: Partial<Category>) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+
+  const { error } = await supabase
     .from('category')
-    .update({ name, imageUrl })
-    .match({ slug });
+    .update(data)
+    .eq('id', parseInt(categoryId));
 
-  if (error) throw new Error(`Error updating category: ${error.message}`);
+  if (error) {
+    throw new Error(error.message);
+  }
 
   revalidatePath('/admin/categories');
+}
 
-  return data;
-};
-
-export const deleteCategory = async (id: number) => {
+export async function deleteCategory(categoryId: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from('category').delete().match({ id });
 
-  if (error) throw new Error(`Error deleting category: ${error.message}`);
+  const { error } = await supabase
+    .from('category')
+    .delete()
+    .eq('id', parseInt(categoryId));
+
+  if (error) {
+    throw new Error(error.message);
+  }
 
   revalidatePath('/admin/categories');
-};
+}
 
-export const getCategoryData = async () => {
+export async function getCategoryData() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('category')
     .select('name, products:product(id)');
 
-  if (error) throw new Error(`Error fetching category data: ${error.message}`);
+  if (error) {
+    throw new Error(error.message);
+  }
 
-  const categoryData = data.map(
-    (category: { name: string; products: { id: number }[] }) => ({
+  return data.map((category: { name: string; products: { id: number }[] }) => ({
       name: category.name,
       products: category.products.length,
-    })
-  );
-
-  return categoryData;
-};
+  }));
+}

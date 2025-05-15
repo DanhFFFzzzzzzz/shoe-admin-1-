@@ -1,18 +1,20 @@
 'use client';
 
-import { FC, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { PlusCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { v4 as uuid } from 'uuid';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -21,179 +23,195 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
-import { CategoryTableRow } from '@/components/category';
-import {
-  createCategorySchema,
-  CreateCategorySchema,
-} from '@/app/admin/categories/create-category.schema';
-import { CategoriesWithProductsResponse } from '@/app/admin/categories/categories.types';
-import { CategoryForm } from '@/app/admin/categories/category-form';
+import { createCategory, deleteCategory, updateCategory } from '@/server/actions/categories';
+import { Tables } from '@/supabase.types';
 
-import {
-  createCategory,
-  deleteCategory,
-  imageUploadHandler,
-  updateCategory,
-} from '@/actions/categories';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+type Category = Tables<'category'>;
+
+const formSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  imageUrl: z.string().min(1, 'Image URL is required'),
+  slug: z.string().min(1, 'Slug is required'),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 type Props = {
-  categories: CategoriesWithProductsResponse;
+  categories: Category[];
 };
 
-const CategoriesPageComponent: FC<Props> = ({ categories }) => {
-  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<CreateCategorySchema | null>(null);
+export default function CategoriesPageComponent({ categories }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const form = useForm<CreateCategorySchema>({
-    resolver: zodResolver(createCategorySchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      image: undefined,
+      imageUrl: '',
+      slug: '',
     },
   });
 
-  const router = useRouter();
-
-  const submitCategoryHandler: SubmitHandler<CreateCategorySchema> = async data => {
-    const { image, name, intent = 'create' } = data;
-
-    const handleImageUpload = async () => {
-      const uniqueId = uuid();
-      const fileName = `category/category-${uniqueId}`;
-      const file = new File([image[0]], fileName);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      return imageUploadHandler(formData);
-    };
-
-    switch (intent) {
-      case 'create': {
-        const imageUrl = await handleImageUpload();
-        if (imageUrl) {
-          await createCategory({ imageUrl, name });
-          form.reset();
-          router.refresh();
-          setIsCreateCategoryModalOpen(false);
-          toast.success('Category created successfully');
-        }
-        break;
-      }
-
-      case 'update': {
-        if (image && currentCategory?.slug) {
-          const imageUrl = await handleImageUpload();
-          if (imageUrl) {
-            await updateCategory({
-              imageUrl,
-              name,
-              slug: currentCategory.slug,
-              intent: 'update',
-            });
-            form.reset();
-            router.refresh();
-            setIsCreateCategoryModalOpen(false);
-            toast.success('Category updated successfully');
-          }
-        }
-        break;
-      }
-
-      default:
-        console.error('Invalid intent');
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await createCategory({
+        name: data.name,
+        imageUrl: data.imageUrl,
+        slug: data.slug,
+      });
+      setIsOpen(false);
+      form.reset();
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deleteCategoryHandler = async (id: number) => {
-    await deleteCategory(id);
-    router.refresh();
-    toast.success('Category deleted successfully');
+  const handleDelete = async (categoryId: number) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await deleteCategory(categoryId.toString());
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
+    }
+  };
+
+  const handleUpdate = async (categoryId: number, data: Partial<Category>) => {
+    try {
+      await updateCategory(categoryId.toString(), data);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
   };
 
   return (
-    <main className='grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8'>
-      <div className='flex items-center my-10'>
-        <div className='ml-auto flex items-center gap-2'>
-          <Dialog
-            open={isCreateCategoryModalOpen}
-            onOpenChange={() =>
-              setIsCreateCategoryModalOpen(!isCreateCategoryModalOpen)
-            }
-          >
-            <DialogTrigger asChild>
-              <Button
-                size='sm'
-                className='h-8 gap-1'
-                onClick={() => {
-                  setCurrentCategory(null);
-                  setIsCreateCategoryModalOpen(true);
-                }}
+    <div className='container mx-auto p-6'>
+      <div className='flex justify-between items-center mb-6'>
+        <h1 className='text-2xl font-bold'>Categories Management</h1>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>Add New Category</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Category</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className='space-y-4'
               >
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Add Category
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md w-full rounded-2xl shadow-2xl p-8 z-50 bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 mx-auto">
-              <DialogHeader>
-                <DialogTitle>Tạo danh mục mới</DialogTitle>
-              </DialogHeader>
-              <CategoryForm
-                form={form}
-                onSubmit={submitCategoryHandler}
-                defaultValues={currentCategory}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+                <FormField
+                  control={form.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='imageUrl'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Image URL</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='slug'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Slug</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {error && (
+                  <div className='text-red-500 text-sm'>{error}</div>
+                )}
+                <Button type='submit' disabled={isLoading}>
+                  {isLoading ? 'Adding...' : 'Add Category'}
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Card className='overflow-x-auto'>
-        <CardHeader>
-          <CardTitle>Categories</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <Table className='min-w-[600px]'>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='w-[100px] sm:table-cell'>
-                  <span className='sr-only'>Image</span>
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className='md:table-cell'>Created at</TableHead>
-                <TableHead className='md:table-cell'>Products</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map(category => (
-                <CategoryTableRow
-                  key={category.id}
-                  category={category}
-                  setCurrentCategory={setCurrentCategory}
-                  setIsCreateCategoryModalOpen={setIsCreateCategoryModalOpen}
-                  deleteCategoryHandler={deleteCategoryHandler}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </main>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Image URL</TableHead>
+            <TableHead>Slug</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {categories.map((category) => (
+            <TableRow key={category.id}>
+              <TableCell>{category.name}</TableCell>
+              <TableCell>{category.imageUrl}</TableCell>
+              <TableCell>{category.slug}</TableCell>
+              <TableCell>
+                <div className='flex space-x-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() =>
+                      handleUpdate(category.id, {
+                        name: category.name + ' (Updated)',
+                      })
+                    }
+                  >
+                    Update
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={() => handleDelete(category.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
-};
-
-export default CategoriesPageComponent;
+}

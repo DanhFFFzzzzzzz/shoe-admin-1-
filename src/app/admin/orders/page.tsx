@@ -1,19 +1,8 @@
-import { getOrdersWithProducts } from '@/actions/order';
-import PageComponent from '@/app/admin/orders/page-component';
+import { getOrders } from '@/server/actions/order';
+import PageComponent from './page-component';
 
-const Orders = async () => {
-  const ordersWithProducts = await getOrdersWithProducts();
+export default async function OrdersPage() {
+  const orders = await getOrders();
 
-  if (!ordersWithProducts)
-    return (
-      <div className='text-center font-bold text-2xl'>No orders found</div>
-    );
-
-  return (
-    <div>
-      <PageComponent ordersWithProducts={ordersWithProducts} />
-    </div>
-  );
-};
-
-export default Orders;
+  return <PageComponent orders={orders} />;
+}

@@ -2,7 +2,7 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { RenderMounted } from "@/components/render-mounted";
 import { ADMIN } from "@/constants/constants";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/server/supabase/server";
 import { redirect } from "next/navigation";
 import { ReactNode} from "react";
 

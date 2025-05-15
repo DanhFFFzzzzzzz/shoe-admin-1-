@@ -1,20 +1,20 @@
 'use server';
 
-import { createClient } from '@/supabase/server';
+import { createClient } from '@/server/supabase/server';
 
 export const authenticate = async (email: string, password: string) => {
-  const supabase = createClient();
-  try {
-    const { error } = await (await supabase).auth.signInWithPassword({
-      email,
-      password,
-    });
+  const supabase = await createClient();
 
-    if (error) throw error;
-  } catch (error) {
-    console.log('AUTHENTICATION ERROR', error);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
     throw error;
   }
+
+  return data;
 };
 
 export const getLatestUsers = async () => {

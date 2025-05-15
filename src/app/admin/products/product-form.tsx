@@ -66,6 +66,8 @@ export const ProductForm = ({
         images: undefined,
         description: '',
         sizes: Array.from({ length: 12 }, (_, i) => ({ size: 34 + i, quantity: 0 })),
+        intent: 'create',
+        slug: undefined,
       });
     }
   }, [defaultValues, form]);

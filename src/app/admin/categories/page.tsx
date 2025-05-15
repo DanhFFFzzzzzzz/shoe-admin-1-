@@ -1,8 +1,8 @@
-import { getCategoriesWithProducts } from '@/actions/categories';
-import CategoriesPageComponent from '@/app/admin/categories/page-component';
+import { getCategories } from '@/server/actions/categories';
+import PageComponent from './page-component';
 
-export default async function Categories() {
-  const categories = await getCategoriesWithProducts();
-  console.log('Categories data in page.tsx:', categories);
-  return <CategoriesPageComponent categories={categories} />;
+export default async function CategoriesPage() {
+  const categories = await getCategories();
+
+  return <PageComponent categories={categories} />;
 }

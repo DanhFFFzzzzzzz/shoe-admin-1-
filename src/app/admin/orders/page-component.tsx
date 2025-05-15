@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 
@@ -30,142 +31,125 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-import { OrdersWithProducts } from '@/app/admin/orders/types';
-import { updateOrderStatus } from '@/actions/order';
+import { updateOrderStatus } from '@/server/actions/order';
+import { Tables } from '@/supabase.types';
 
-const statusOptions = ['Pending', 'Shipped', 'InTransit', 'Completed'];
+type Order = Tables<'order'>;
+type OrderItem = Tables<'order_item'>;
+type Product = Tables<'product'>;
 
 type Props = {
-  ordersWithProducts: OrdersWithProducts;
+  orders: (Order & {
+    order_item: (OrderItem & {
+      product: Product;
+    })[];
+  })[];
 };
 
 type OrderedProducts = {
   order_id: number;
-  product: number & {
-    category: number;
-    created_at: string;
-    heroImage: string;
-    id: number;
-    imagesUrl: string[];
-    maxQuantity: number;
-    price: number;
-    slug: string;
-    title: string;
-  };
+  product: Tables<'product'>;
 }[];
 
-export default function PageComponent({ ordersWithProducts }: Props) {
+export default function OrdersPageComponent({ orders }: Props) {
   const [selectedProducts, setSelectedProducts] = useState<OrderedProducts>([]);
+  const [isUpdating, setIsUpdating] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const openProductsModal = (products: OrderedProducts) => () =>
     setSelectedProducts(products);
 
-  const orderedProducts = ordersWithProducts.flatMap(order =>
-    order.order_items.map(item => ({
+  const orderedProducts = orders.flatMap(order =>
+    order.order_item.map(item => ({
       order_id: order.id,
       product: item.product,
     }))
   );
 
-  const handleStatusChange = async (orderId: number, status: string) => {
-    await updateOrderStatus(orderId, status);
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    try {
+      setIsUpdating(orderId);
+      setIsLoading(true);
+      setError(null);
+      await updateOrderStatus(orderId.toString(), newStatus);
+      toast.success('Order status updated successfully');
     router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsUpdating(null);
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className='container mx-auto p-6'>
-      <h1 className='text-2xl font-bold mb-6'>Orders Management Dashboard</h1>
+      <div className='flex justify-between items-center mb-6'>
+        <h1 className='text-2xl font-bold'>Quản lý đơn hàng</h1>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Created At</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Total Price</TableHead>
-            <TableHead>Products</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Mã đơn</TableHead>
+            <TableHead>Ngày đặt</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead>Tổng tiền</TableHead>
+            <TableHead>Chi tiết</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {ordersWithProducts.map(order => (
+          {orders.map((order) => (
             <TableRow key={order.id}>
               <TableCell>{order.id}</TableCell>
               <TableCell>
-                {format(new Date(order.created_at), 'MMM dd, yyyy')}
+                {format(new Date(order.created_at), 'MMM d, yyyy')}
               </TableCell>
               <TableCell>
                 <Select
-                  onValueChange={value => handleStatusChange(order.id, value)}
                   defaultValue={order.status}
+                  onValueChange={(value) =>
+                    handleStatusChange(order.id, value)
+                  }
+                  disabled={isLoading}
                 >
-                  <SelectTrigger className='w-[120px]'>
-                    <SelectValue>{order.status}</SelectValue>
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {statusOptions.map(status => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value='pending'>Chờ xác nhận</SelectItem>
+                    <SelectItem value='processing'>Đang xử lý</SelectItem>
+                    <SelectItem value='shipped'>Đã gửi hàng</SelectItem>
+                    <SelectItem value='delivered'>Đã giao</SelectItem>
+                    <SelectItem value='cancelled'>Đã hủy</SelectItem>
                   </SelectContent>
                 </Select>
               </TableCell>
-              <TableCell>{order.description || 'No Description'}</TableCell>
-              {/* @ts-ignore */}
-              <TableCell>{order.user.email}</TableCell>
-              <TableCell>{order.slug}</TableCell>
               <TableCell>$ {order.totalPrice.toFixed(2)}</TableCell>
-              <TableCell>
-                {order.order_items.length} item
-                {order.order_items.length > 1 ? 's' : ''}
-              </TableCell>
               <TableCell>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={openProductsModal(
-                        orderedProducts.filter(
-                          item => item.order_id === order.id
-                        )
-                      )}
-                    >
-                      View Products
-                    </Button>
+                    <Button variant="outline" size="sm">Chi tiết đơn</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Order Products</DialogTitle>
+                      <DialogTitle>Chi tiết đơn hàng #{order.id}</DialogTitle>
                     </DialogHeader>
-
-                    <div className='mt-4'>
-                      {selectedProducts.map(({ product }, index) => (
-                        <div
-                          key={index}
-                          className='mr-2 mb-2 flex items-center space-x-2'
-                        >
+                    <div className="space-y-4">
+                      {order.order_item.map((item) => (
+                        <div key={item.id} className="flex items-center space-x-4">
                           <Image
-                            className='w-16 h-16 object-cover rounded'
-                            src={product.heroImage}
-                            alt={product.title}
-                            width={64}
-                            height={64}
+                            src={item.product.heroImage}
+                            alt={item.product.title}
+                            width={60}
+                            height={60}
+                            className="rounded border"
                           />
-                          <div className='flex flex-col'>
-                            <span className='font-semibold'>
-                              {product.title}
-                            </span>
-                            <span className='text-gray-600'>
-                              $ {product.price.toFixed(2)}
-                            </span>
-                            <span className='text-sm text-gray-500'>
-                              Available Quantity: {product.maxQuantity}
-                            </span>
+                          <div>
+                            <div className="font-semibold">{item.product.title}</div>
+                            <div className="text-sm text-gray-500">Số lượng: x{item.quantity}</div>
                           </div>
                         </div>
                       ))}
@@ -177,6 +161,10 @@ export default function PageComponent({ ordersWithProducts }: Props) {
           ))}
         </TableBody>
       </Table>
+
+      {error && (
+        <div className='mt-4 text-red-500 text-sm'>{error}</div>
+      )}
     </div>
   );
 }
