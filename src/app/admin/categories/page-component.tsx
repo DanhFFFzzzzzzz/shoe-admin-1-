@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -53,6 +54,12 @@ export default function CategoriesPageComponent({ categories }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [editCategory, setEditCategory] = useState<Category | null>(null);
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -64,154 +71,251 @@ export default function CategoriesPageComponent({ categories }: Props) {
     },
   });
 
+  // Tự động sinh slug từ tên danh mục
+  const watchName = form.watch('name');
+  const slugify = (str: string) =>
+    str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+  // Khi tên thay đổi thì cập nhật slug
+  React.useEffect(() => {
+    form.setValue('slug', slugify(watchName || ''));
+  }, [watchName]);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Upload ảnh lên server
+  async function uploadImage(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setUploadError(data.error || 'Upload thất bại');
+        throw new Error(data.error || 'Upload thất bại');
+      }
+      setImageUrl(data.url);
+      form.setValue('imageUrl', data.url);
+      return data.url;
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload thất bại');
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const openEditDialog = (category: Category) => {
+    setEditCategory(category);
+    setIsOpen(true);
+    form.reset({
+      name: category.name,
+      imageUrl: category.imageUrl,
+      slug: category.slug,
+    });
+    setImagePreview(category.imageUrl || null);
+    setImageUrl(category.imageUrl || '');
+  };
+
   const onSubmit = async (data: FormValues) => {
     try {
       setIsLoading(true);
       setError(null);
-      await createCategory({
-        name: data.name,
-        imageUrl: data.imageUrl,
-        slug: data.slug,
-      });
+      setUploadError(null);
+      if (!data.imageUrl || typeof data.imageUrl !== 'string') {
+        setError('Vui lòng upload hình ảnh.');
+        setIsLoading(false);
+        return;
+      }
+      if (editCategory) {
+        await updateCategory(editCategory.id.toString(), {
+          name: data.name,
+          imageUrl: data.imageUrl,
+          slug: data.slug,
+        });
+      } else {
+        await createCategory({
+          name: data.name,
+          imageUrl: data.imageUrl,
+          slug: data.slug,
+        });
+      }
       setIsOpen(false);
+      setEditCategory(null);
+      setImagePreview(null);
+      setImageUrl('');
       form.reset();
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (categoryId: number) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
       try {
         await deleteCategory(categoryId.toString());
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
       }
     }
   };
 
-  const handleUpdate = async (categoryId: number, data: Partial<Category>) => {
-    try {
-      await updateCategory(categoryId.toString(), data);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    }
-  };
-
   return (
-    <div className='container mx-auto p-6'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold'>Categories Management</h1>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <div className="container mx-auto p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-200 tracking-tight">Quản lý danh mục</h1>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) { setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); } }}>
           <DialogTrigger asChild>
-            <Button>Add New Category</Button>
+            <Button className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold px-6 py-2 rounded-lg shadow hover:from-blue-600 hover:to-blue-800 transition">Thêm danh mục mới</Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Category</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className='space-y-4'
-              >
-                <FormField
-                  control={form.control}
-                  name='name'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+          <DialogContent className="max-w-md w-full rounded-2xl shadow-2xl p-0 z-50 bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-blue-200 dark:border-blue-800 mx-auto">
+            <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-t-2xl p-6 border-b border-blue-200 dark:border-blue-800 shadow-md flex items-center justify-between">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  {editCategory ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}
+                </DialogTitle>
+              </DialogHeader>
+              <button
+                type="button"
+                className="ml-auto text-zinc-500 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full p-1 transition-colors"
+                aria-label="Đóng"
+                onClick={() => { setIsOpen(false); setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); }}
+              >×</button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-6 pt-2 bg-white dark:bg-zinc-900 rounded-b-2xl">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên danh mục</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nhập tên danh mục" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <label className="block font-medium mb-1">Hình ảnh</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading || isLoading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setImagePreview(URL.createObjectURL(file));
+                          try {
+                            await uploadImage(file);
+                          } catch {}
+                        }
+                      }}
+                      className="block w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 shadow-sm"
+                    />
+                    {hasMounted && imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded border" />
+                    )}
+                    {uploading && <div className="text-blue-500 text-sm mt-1">Đang tải ảnh lên...</div>}
+                    {uploadError && <div className="text-red-500 text-sm mt-1">{uploadError}</div>}
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug (đường dẫn)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="slug-khong-dau" {...field} readOnly />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {(error || uploadError) && (
+                    <div className="text-red-500 text-sm">{error || uploadError}</div>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name='imageUrl'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='slug'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Slug</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {error && (
-                  <div className='text-red-500 text-sm'>{error}</div>
-                )}
-                <Button type='submit' disabled={isLoading}>
-                  {isLoading ? 'Adding...' : 'Add Category'}
-                </Button>
-              </form>
-            </Form>
+                  <Button type="submit" disabled={isLoading || uploading || !imageUrl} className="w-full mt-2 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 text-lg">
+                    {isLoading || uploading ? (editCategory ? 'Đang cập nhật...' : 'Đang thêm...') : (editCategory ? 'Lưu thay đổi' : 'Thêm danh mục')}
+                  </Button>
+                </form>
+              </Form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Image URL</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.map((category) => (
-            <TableRow key={category.id}>
-              <TableCell>{category.name}</TableCell>
-              <TableCell>{category.imageUrl}</TableCell>
-              <TableCell>{category.slug}</TableCell>
-              <TableCell>
-                <div className='flex space-x-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() =>
-                      handleUpdate(category.id, {
-                        name: category.name + ' (Updated)',
-                      })
-                    }
-                  >
-                    Update
-                  </Button>
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
+      <div className="overflow-x-auto rounded-xl shadow border border-blue-100 dark:border-blue-800 bg-white dark:bg-zinc-900">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 text-blue-700 dark:text-blue-200 font-bold text-base">
+              <TableHead className="py-3 px-4">Tên danh mục</TableHead>
+              <TableHead className="py-3 px-4">Hình ảnh</TableHead>
+              <TableHead className="py-3 px-4">Slug</TableHead>
+              <TableHead className="py-3 px-4">Thao tác</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {categories.length > 0 ? categories.map((category) => (
+              <TableRow key={category.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/20 transition border-b border-blue-50 dark:border-blue-900">
+                <TableCell className="py-3 px-4 font-semibold text-zinc-800 dark:text-zinc-100">{category.name}</TableCell>
+                <TableCell className="py-3 px-4">
+                  {category.imageUrl ? (
+                    <img src={category.imageUrl} alt={category.name} className="w-16 h-16 object-cover rounded border border-blue-100 dark:border-blue-800 shadow-sm" />
+                  ) : (
+                    <span className="text-gray-400">Không có ảnh</span>
+                  )}
+                </TableCell>
+                <TableCell className="py-3 px-4 text-zinc-700 dark:text-zinc-200">{category.slug}</TableCell>
+                <TableCell className="py-3 px-4">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-400 text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 font-semibold rounded-lg px-3 py-1"
+                      onClick={() => openEditDialog(category)}
+                    >
+                      Cập nhật
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="rounded-lg px-3 py-1 font-semibold"
+                      onClick={() => handleDelete(category.id)}
+                    >
+                      Xóa
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-gray-400">Không có danh mục nào.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

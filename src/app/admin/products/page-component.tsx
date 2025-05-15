@@ -194,7 +194,7 @@ export default function ProductsPageComponent({
       else setError('Đã xảy ra lỗi khi thêm/cập nhật sản phẩm.');
     } finally {
       setIsLoading(false);
-        }
+    }
   };
 
   const handleDelete = async (productId: number) => {
@@ -419,7 +419,7 @@ export default function ProductsPageComponent({
                                     />
                                   </td>
                                 </tr>
-              ))}
+                              ))}
                             </tbody>
                           </table>
         </div>
