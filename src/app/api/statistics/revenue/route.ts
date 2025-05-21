@@ -2,13 +2,12 @@ import { createClient } from '@/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Lấy tất cả đơn hàng đã hoàn thành
   const { data: orders, error } = await supabase
     .from('order')
-    .select('id, totalPrice, created_at')
-    .eq('status', 'Completed');
+    .select('id, totalPrice, created_at, status');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -18,6 +17,7 @@ export async function GET(req: Request) {
   const byMonth: Record<string, number> = {};
   const byQuarter: Record<string, number> = {};
   const byYear: Record<string, number> = {};
+  const ordersByStatus: Record<string, number> = {};
 
   for (const order of orders || []) {
     const date = new Date(order.created_at);
@@ -28,7 +28,11 @@ export async function GET(req: Request) {
     byMonth[month] = (byMonth[month] || 0) + order.totalPrice;
     byQuarter[quarter] = (byQuarter[quarter] || 0) + order.totalPrice;
     byYear[year] = (byYear[year] || 0) + order.totalPrice;
+
+    // Đếm số lượng đơn theo trạng thái
+    const status = order.status || 'Unknown';
+    ordersByStatus[status] = (ordersByStatus[status] || 0) + 1;
   }
 
-  return NextResponse.json({ byMonth, byQuarter, byYear });
+  return NextResponse.json({ byMonth, byQuarter, byYear, ordersByStatus });
 } 

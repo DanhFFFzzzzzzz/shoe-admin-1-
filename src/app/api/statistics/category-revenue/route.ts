@@ -2,7 +2,7 @@ import { createClient } from '@/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Lấy tất cả order_item của đơn hàng đã hoàn thành, kèm thông tin sản phẩm
   const { data: orderItems, error } = await supabase
@@ -14,17 +14,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Thống kê doanh thu theo loại sản phẩm
-  const categoryRevenue: Record<string, { total: number, quantity: number }> = {};
+  // Thống kê doanh thu theo tên sản phẩm
+  const productRevenue: Record<string, { total: number, quantity: number }> = {};
 
   for (const item of orderItems || []) {
-    const category = item.product?.category ?? 'Unknown';
+    const productName = item.product?.title ?? 'Unknown';
     const price = item.product?.price ?? 0;
     const qty = item.quantity ?? 0;
-    if (!categoryRevenue[category]) categoryRevenue[category] = { total: 0, quantity: 0 };
-    categoryRevenue[category].total += price * qty;
-    categoryRevenue[category].quantity += qty;
+    if (!productRevenue[productName]) productRevenue[productName] = { total: 0, quantity: 0 };
+    productRevenue[productName].total += price * qty;
+    productRevenue[productName].quantity += qty;
   }
 
-  return NextResponse.json({ categoryRevenue });
+  return NextResponse.json({ productRevenue });
 } 

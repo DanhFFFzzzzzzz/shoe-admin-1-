@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { orderId } = await req.json();
 
     // Lấy thông tin các sản phẩm trong đơn hàng
     const { data: orderItems, error: fetchError } = await supabase
       .from('order_item')
-      .select('product, quantity')
+      .select('product, quantity, size')
       .eq('order', orderId);
 
     if (fetchError) {
@@ -24,10 +24,9 @@ export async function POST(req: Request) {
       // Lấy thông tin size của sản phẩm
       const { data: productSize, error: sizeError } = await supabase
         .from('product_size')
-        .select('quantity, size')
-        .eq('product', item.product)
-        .order('quantity', { ascending: false })
-        .limit(1)
+        .select('quantity')
+        .eq('product', Number(item.product))
+        .eq('size', Number(item.size))
         .single();
 
       if (sizeError) {
@@ -41,8 +40,8 @@ export async function POST(req: Request) {
       const { error: updateSizeError } = await supabase
         .from('product_size')
         .update({ quantity: productSize.quantity + item.quantity })
-        .eq('product', item.product)
-        .eq('size', productSize.size);
+        .eq('product', Number(item.product))
+        .eq('size', Number(item.size));
 
       if (updateSizeError) {
         return NextResponse.json(
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
       const { data: product, error: productError } = await supabase
         .from('product')
         .select('maxQuantity')
-        .eq('id', item.product)
+        .eq('id', Number(item.product))
         .single();
 
       if (productError) {
@@ -68,7 +67,7 @@ export async function POST(req: Request) {
       const { error: updateMaxQuantityError } = await supabase
         .from('product')
         .update({ maxQuantity: product.maxQuantity + item.quantity })
-        .eq('id', item.product);
+        .eq('id', Number(item.product));
 
       if (updateMaxQuantityError) {
         return NextResponse.json(
@@ -78,28 +77,15 @@ export async function POST(req: Request) {
       }
     }
 
-    // Xóa các sản phẩm trong đơn hàng
-    const { error: deleteItemsError } = await supabase
-      .from('order_item')
-      .delete()
-      .eq('order', orderId);
-
-    if (deleteItemsError) {
-      return NextResponse.json(
-        { error: 'Lỗi xóa sản phẩm trong đơn hàng' },
-        { status: 500 }
-      );
-    }
-
-    // Xóa đơn hàng
-    const { error: deleteOrderError } = await supabase
+    // Cập nhật trạng thái đơn hàng thành 'cancelled' thay vì xóa
+    const { error: updateOrderError } = await supabase
       .from('order')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('id', orderId);
 
-    if (deleteOrderError) {
+    if (updateOrderError) {
       return NextResponse.json(
-        { error: 'Lỗi xóa đơn hàng' },
+        { error: 'Lỗi cập nhật trạng thái đơn hàng' },
         { status: 500 }
       );
     }

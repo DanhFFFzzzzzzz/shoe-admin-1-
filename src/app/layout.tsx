@@ -29,6 +29,9 @@ export default function RootLayout({
       <head>
         <meta charSet="UTF-8" />
         <title>Tiêu đề trang</title>
+        <link rel="icon" href="/favicon.ico" />
+        {/* Fallback favicon nếu file local chưa có */}
+        <link rel="icon" href="https://favicon.io/favicon.ico" type="image/x-icon" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-white text-gray-900 antialiased`}>
         <ThemeProvider

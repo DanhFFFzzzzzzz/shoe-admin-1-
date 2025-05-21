@@ -20,10 +20,12 @@ import { useTheme } from 'next-themes';
 import { createClient } from '@/server/supabase/client';
 
 const NAV_LINKS = [
-  { href: '/admin/dashboard', label: 'Dashboard' },
-  { href: '/admin/orders', label: 'Orders' },
-  { href: '/admin/products', label: 'Products' },
-  { href: '/admin/categories', label: 'Categories' },
+  { href: '/admin/dashboard', label: 'Bảng tin' },
+  { href: '/admin/users', label: 'Người dùng' },
+  { href: '/admin/orders', label: 'Đơn hàng' },
+  { href: '/admin/products', label: 'Sản phẩm' },
+  { href: '/admin/categories', label: 'Danh mục' },
+  { href: '/admin/statistics', label: 'Thống kê' },
 ];
 
 export const Header = () => {
@@ -98,7 +100,7 @@ export const Header = () => {
             <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
             <Input
               type='search'
-              placeholder='Search products...'
+              placeholder='Tìm kiếm sản phẩm...'
               className='pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] focus-visible:ring-primary'
             />
           </div>
