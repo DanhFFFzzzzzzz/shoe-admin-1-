@@ -4,11 +4,12 @@ import { NextResponse } from 'next/server';
 export async function GET(req: Request) {
   const supabase = await createClient();
 
-  // Lấy tất cả order_item của đơn hàng đã hoàn thành, kèm thông tin sản phẩm
+  // Lấy tất cả order_item của đơn hàng không bị hủy, kèm thông tin sản phẩm
   const { data: orderItems, error } = await supabase
     .from('order_item')
     .select('quantity, product:product(id, title, category, price), order:order(id, status)')
-    .eq('order.status', 'Completed');
+    .not('order.status', 'eq', 'cancelled')
+    .not('order.status', 'eq', 'Cancelled');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
