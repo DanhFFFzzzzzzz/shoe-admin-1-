@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 
 // Định nghĩa kiểu dữ liệu người dùng
 interface User {
@@ -23,6 +24,7 @@ export default function UsersPage() {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [form, setForm] = useState<Partial<User>>({});
   const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -98,11 +100,35 @@ export default function UsersPage() {
     }
   };
 
+  // Lọc users theo search
+  const filteredUsers = users.filter(user => {
+    const q = search.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(q) ||
+      user.email?.toLowerCase().includes(q) ||
+      user.type?.toLowerCase().includes(q) ||
+      user.address?.toLowerCase().includes(q) ||
+      user.phone?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Quản lý người dùng</h1>
-      <div className="mb-4 flex justify-end">
-        <Button onClick={openAdd}>Thêm người dùng</Button>
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div className="relative w-full md:w-80">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search className="w-5 h-5" />
+          </span>
+          <input
+            type="text"
+            className="border rounded pl-10 pr-4 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none shadow-sm"
+            placeholder="Tìm kiếm"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <Button onClick={openAdd} className="w-full md:w-auto">Thêm người dùng</Button>
       </div>
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <div className="overflow-x-auto">
@@ -124,10 +150,10 @@ export default function UsersPage() {
           <tbody>
             {loading ? (
               <tr><td colSpan={10} className="text-center py-4">Đang tải...</td></tr>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <tr><td colSpan={10} className="text-center py-4">Không có người dùng nào.</td></tr>
             ) : (
-              users.map(user => (
+              filteredUsers.map(user => (
                 <tr key={user.id} className="border-b">
                   <td className="py-2 px-4 border">{user.id}</td>
                   <td className="py-2 px-4 border">{user.email}</td>

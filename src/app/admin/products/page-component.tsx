@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Search } from "lucide-react";
 
 import { Button } from '@/components/ui/button';
 import {
@@ -78,6 +79,7 @@ export default function ProductsPageComponent({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
   const [editProduct, setEditProduct] = useState<ProductWithSizes | null>(null);
+  const [search, setSearch] = useState("");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,6 +97,8 @@ export default function ProductsPageComponent({
   const watchSizes = form.watch('sizes');
   const maxQuantity = Array.isArray(watchSizes) ? watchSizes.reduce((sum, sz) => sum + (Number(sz.quantity) || 0), 0) : 0;
   const watchTitle = form.watch('title');
+
+  const filteredProducts = productsWithCategories.filter(product => product.title.toLowerCase().includes(search.toLowerCase()));
 
   async function uploadImage(file: File): Promise<string> {
     setUploading(true);
@@ -219,8 +223,20 @@ export default function ProductsPageComponent({
 
   return (
     <div className='container mx-auto p-6'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
+      <h1 className='text-2xl font-bold mb-4'>Quản lý sản phẩm</h1>
+      <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-6'>
+        <div className="relative w-full md:w-80">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search className="w-5 h-5" />
+          </span>
+          <input
+            type="text"
+            className="border rounded pl-10 pr-4 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none shadow-sm"
+            placeholder="Tìm kiếm tên sản phẩm"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setEditProduct(null); form.reset({ category: '', title: '', description: '', price: '', heroImage: '', imagesUrl: [], sizes: Array.from({ length: 12 }, () => ({ quantity: 0 })) }); setIsOpen(true); }}>
@@ -384,7 +400,7 @@ export default function ProductsPageComponent({
                             {field.value.map((url, idx) => (
                               <img key={idx} src={url} alt={`Ảnh ${idx + 1}`} className='w-16 h-16 object-cover rounded border' />
                             ))}
-        </div>
+                          </div>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -422,7 +438,7 @@ export default function ProductsPageComponent({
                               ))}
                             </tbody>
                           </table>
-        </div>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -452,8 +468,8 @@ export default function ProductsPageComponent({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Array.isArray(productsWithCategories) && productsWithCategories.length > 0 ? (
-            productsWithCategories.map((product) => {
+          {Array.isArray(filteredProducts) && filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => {
               let heroImage = '';
               try {
                 heroImage = typeof product.heroImage === 'string' ? product.heroImage : '';
@@ -501,7 +517,7 @@ export default function ProductsPageComponent({
                         className='rounded-lg px-3 py-1 font-semibold'
                         onClick={() => handleDelete(product.id)}
                       >
-                        Delete
+                        Xóa
                       </Button>
                     </div>
                   </TableCell>

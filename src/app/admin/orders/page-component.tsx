@@ -237,6 +237,7 @@ export default function OrdersPageComponent({ orders }: Props) {
                     <SelectItem value='processing'>Đang xử lý</SelectItem>
                     <SelectItem value='shipped'>Đã gửi hàng</SelectItem>
                     <SelectItem value='delivered'>Đã giao</SelectItem>
+                    <SelectItem value='completed'>Đã hoàn thành</SelectItem>
                     <SelectItem value='cancelled' className="text-red-500">Đã hủy</SelectItem>
                   </SelectContent>
                 </Select>
