@@ -63,6 +63,7 @@ export async function getMonthlyOrders() {
   const { data: orders, error } = await supabase
     .from('order')
     .select('created_at')
+    .neq('status', 'cancelled')
     .order('created_at', { ascending: true });
 
   if (error) {

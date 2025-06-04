@@ -124,14 +124,19 @@ export async function getCategoryData() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('category')
-    .select('name, products:product(id)');
+    .select(`
+      name,
+      product (
+        id
+      )
+    `);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data.map((category: { name: string; products: { id: number }[] }) => ({
+  return data.map((category: { name: string; product: { id: number }[] }) => ({
       name: category.name,
-      products: category.products.length,
+      products: category.product.length,
   }));
 }

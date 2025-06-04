@@ -44,37 +44,37 @@ export const Header = () => {
       <div className="flex h-16 items-center px-4 md:px-8">
         {/* Logo bên trái sát mép */}
         <div className="flex items-center flex-shrink-0 mr-4">
-          <Link
-            href='/'
+        <Link
+          href='/'
             className='flex items-center gap-2 text-2xl font-extrabold text-primary hover:opacity-80 transition-opacity'
             style={{ minWidth: 180 }}
-          >
+        >
             <Package2 className='h-7 w-7 text-primary' />
             <span className="text-primary font-extrabold tracking-wide">Shoe Store</span>
-          </Link>
+        </Link>
         </div>
         {/* Menu dàn đều ở giữa */}
         <nav className="hidden md:flex flex-1 justify-center items-center">
           <ul className="flex gap-8 lg:gap-12 w-full justify-center">
-            {NAV_LINKS.map(({ href, label }) => (
+        {NAV_LINKS.map(({ href, label }) => (
               <li key={href} className="flex-1 text-center">
-                <Link
-                  href={href}
-                  className={cn(
+          <Link
+            href={href}
+            className={cn(
                     'inline-block px-4 py-2 rounded-xl text-base font-semibold transition-all duration-200 hover:text-primary hover:bg-primary/10',
-                    {
+              {
                       'text-white font-bold bg-primary shadow hover:text-white hover:bg-primary': pathname === href,
                       'text-muted-foreground': pathname !== href,
-                    }
-                  )}
+              }
+            )}
                   style={pathname === href ? { zIndex: 10, position: 'relative' } : {}}
-                >
-                  {label}
-                </Link>
+          >
+            {label}
+          </Link>
               </li>
-            ))}
+        ))}
           </ul>
-        </nav>
+      </nav>
         {/* Search + user/account bên phải */}
         <div className='flex items-center gap-2 lg:gap-4 ml-auto'>
           <form className='hidden lg:block'>
@@ -123,37 +123,37 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           {/* Nút menu mobile */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant='outline' size='icon' className='shrink-0 md:hidden hover:bg-primary/10'>
-                <Menu className='h-5 w-5' />
-                <span className='sr-only'>Toggle navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='left' className="w-[300px] sm:w-[400px]">
-              <nav className='grid gap-6 text-lg font-medium'>
-                <Link
-                  href='/'
-                  className='flex items-center gap-2 text-lg font-semibold hover:opacity-80 transition-opacity'
-                >
-                  <Package2 className='h-6 w-6 text-primary' />
-                  <span className="text-primary font-bold">Shoe Store</span>
-                </Link>
-                {NAV_LINKS.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant='outline' size='icon' className='shrink-0 md:hidden hover:bg-primary/10'>
+            <Menu className='h-5 w-5' />
+            <span className='sr-only'>Toggle navigation menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side='left' className="w-[300px] sm:w-[400px]">
+          <nav className='grid gap-6 text-lg font-medium'>
+            <Link
+              href='/'
+              className='flex items-center gap-2 text-lg font-semibold hover:opacity-80 transition-opacity'
+            >
+              <Package2 className='h-6 w-6 text-primary' />
+              <span className="text-primary font-bold">Shoe Store</span>
+            </Link>
+            {NAV_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
                     className={cn('transition-all duration-200 hover:text-primary text-muted-foreground px-2 py-2 rounded-lg', {
                       'text-primary font-semibold bg-primary/10': pathname === href,
-                    })}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
+                })}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
+              </div>
       </div>
     </header>
   );

@@ -18,8 +18,8 @@ export const authenticate = async (email: string, password: string) => {
 };
 
 export const getLatestUsers = async () => {
-  const supabase = createClient();
-  const { data, error } = await (await supabase)
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('users')
     .select('id, email, created_at')
     .order('created_at', { ascending: false })

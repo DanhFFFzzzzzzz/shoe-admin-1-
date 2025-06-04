@@ -26,14 +26,14 @@ export async function GET(req: Request) {
 
     // Chỉ cộng doanh thu nếu đơn không bị hủy
     if (status !== 'cancelled' && status !== 'Cancelled') {
-      const date = new Date(order.created_at);
-      const month = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-      const quarter = `${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`;
-      const year = `${date.getFullYear()}`;
+    const date = new Date(order.created_at);
+    const month = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    const quarter = `${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`;
+    const year = `${date.getFullYear()}`;
 
-      byMonth[month] = (byMonth[month] || 0) + order.totalPrice;
-      byQuarter[quarter] = (byQuarter[quarter] || 0) + order.totalPrice;
-      byYear[year] = (byYear[year] || 0) + order.totalPrice;
+    byMonth[month] = (byMonth[month] || 0) + order.totalPrice;
+    byQuarter[quarter] = (byQuarter[quarter] || 0) + order.totalPrice;
+    byYear[year] = (byYear[year] || 0) + order.totalPrice;
     }
   }
 

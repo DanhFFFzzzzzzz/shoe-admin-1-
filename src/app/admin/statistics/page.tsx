@@ -257,7 +257,7 @@ export default function StatisticsPage() {
                 {categoryRevenueKeys.map((cat, idx) => (
                   <Bar key={cat} dataKey={cat} name={cat} fill={['#3b82f6', '#ec4899', '#f59e42', '#10b981', '#a78bfa', '#f43f5e', '#fbbf24'][idx % 7]}>
                     <LabelList dataKey={cat} position="top" formatter={(v: number) => v > 0 ? v.toLocaleString('vi-VN') + ' ₫' : ''} offset={10} dx={20} textAnchor="middle" fontSize={13} />
-                  </Bar>
+                </Bar>
                 ))}
               </BarChart>
             </ResponsiveContainer>

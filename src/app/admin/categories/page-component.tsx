@@ -200,87 +200,87 @@ export default function CategoriesPageComponent({ categories }: Props) {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) { setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); } }}>
-              <DialogTrigger asChild>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) { setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); } }}>
+          <DialogTrigger asChild>
                 <Button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg shadow transition text-base">Thêm danh mục mới</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md w-full rounded-2xl shadow-2xl p-0 z-50 bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-blue-200 dark:border-blue-800 mx-auto">
-                <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-t-2xl p-6 border-b border-blue-200 dark:border-blue-800 shadow-md flex items-center justify-between">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                      {editCategory ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <button
-                    type="button"
-                    className="ml-auto text-zinc-500 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full p-1 transition-colors"
-                    aria-label="Đóng"
-                    onClick={() => { setIsOpen(false); setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); }}
-                  >×</button>
-                </div>
-                <div className="max-h-[70vh] overflow-y-auto p-6 pt-2 bg-white dark:bg-zinc-900 rounded-b-2xl">
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tên danh mục</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập tên danh mục" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div>
-                        <label className="block font-medium mb-1">Hình ảnh</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={uploading || isLoading}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setImagePreview(URL.createObjectURL(file));
-                              try {
-                                await uploadImage(file);
-                              } catch {}
-                            }
-                          }}
-                          className="block w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 shadow-sm"
-                        />
-                        {hasMounted && imagePreview && (
-                          <img src={imagePreview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded border" />
-                        )}
-                        {uploading && <div className="text-blue-500 text-sm mt-1">Đang tải ảnh lên...</div>}
-                        {uploadError && <div className="text-red-500 text-sm mt-1">{uploadError}</div>}
-                      </div>
-                      <FormField
-                        control={form.control}
-                        name="slug"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Slug (đường dẫn)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="slug-khong-dau" {...field} readOnly />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {(error || uploadError) && (
-                        <div className="text-red-500 text-sm">{error || uploadError}</div>
-                      )}
-                      <Button type="submit" disabled={isLoading || uploading || !imageUrl} className="w-full mt-2 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 text-lg">
-                        {isLoading || uploading ? (editCategory ? 'Đang cập nhật...' : 'Đang thêm...') : (editCategory ? 'Lưu thay đổi' : 'Thêm danh mục')}
-                      </Button>
-                    </form>
-                  </Form>
-                </div>
-              </DialogContent>
-            </Dialog>
+          </DialogTrigger>
+          <DialogContent className="max-w-md w-full rounded-2xl shadow-2xl p-0 z-50 bg-white dark:bg-zinc-900/90 backdrop-blur-md border border-blue-200 dark:border-blue-800 mx-auto">
+            <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-t-2xl p-6 border-b border-blue-200 dark:border-blue-800 shadow-md flex items-center justify-between">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  {editCategory ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}
+                </DialogTitle>
+              </DialogHeader>
+              <button
+                type="button"
+                className="ml-auto text-zinc-500 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full p-1 transition-colors"
+                aria-label="Đóng"
+                onClick={() => { setIsOpen(false); setEditCategory(null); form.reset(); setImagePreview(null); setImageUrl(''); }}
+              >×</button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-6 pt-2 bg-white dark:bg-zinc-900 rounded-b-2xl">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tên danh mục</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nhập tên danh mục" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <label className="block font-medium mb-1">Hình ảnh</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading || isLoading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setImagePreview(URL.createObjectURL(file));
+                          try {
+                            await uploadImage(file);
+                          } catch {}
+                        }
+                      }}
+                      className="block w-full border border-blue-200 rounded-lg px-3 py-2 bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-100 shadow-sm"
+                    />
+                    {hasMounted && imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded border" />
+                    )}
+                    {uploading && <div className="text-blue-500 text-sm mt-1">Đang tải ảnh lên...</div>}
+                    {uploadError && <div className="text-red-500 text-sm mt-1">{uploadError}</div>}
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug (đường dẫn)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="slug-khong-dau" {...field} readOnly />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {(error || uploadError) && (
+                    <div className="text-red-500 text-sm">{error || uploadError}</div>
+                  )}
+                  <Button type="submit" disabled={isLoading || uploading || !imageUrl} className="w-full mt-2 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 text-lg">
+                    {isLoading || uploading ? (editCategory ? 'Đang cập nhật...' : 'Đang thêm...') : (editCategory ? 'Lưu thay đổi' : 'Thêm danh mục')}
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          </DialogContent>
+        </Dialog>
           </div>
         </div>
       </div>
