@@ -176,6 +176,26 @@ export default function OrdersPageComponent({ orders }: Props) {
     return order.slug || order.id;
   }
 
+  // Hàm xóa đơn hàng
+  const handleDeleteOrder = async (orderId: number, orderSlug: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')) return;
+    try {
+      const res = await fetch('/api/orders/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: orderId, slug: orderSlug }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Lỗi xóa đơn hàng');
+      }
+      toast.success('Đã xóa đơn hàng!');
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Có lỗi khi xóa đơn hàng');
+    }
+  };
+
   return (
     <div className='container mx-auto p-6'>
       <div className='flex justify-between items-center mb-6'>
@@ -243,7 +263,7 @@ export default function OrdersPageComponent({ orders }: Props) {
                 </Select>
               </TableCell>
               <TableCell>{order.totalPrice.toLocaleString('vi-VN')} ₫</TableCell>
-              <TableCell>
+              <TableCell className="flex gap-2">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">Chi tiết đơn</Button>
@@ -277,6 +297,13 @@ export default function OrdersPageComponent({ orders }: Props) {
                     </div>
                   </DialogContent>
                 </Dialog>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteOrder(order.id, order.slug)}
+                >
+                  Xóa
+                </Button>
               </TableCell>
             </TableRow>
           ))}

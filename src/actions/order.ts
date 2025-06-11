@@ -2,7 +2,7 @@
 
 import { createClient } from '@/supabase/server';
 import { revalidatePath } from 'next/cache';
-
+// Lấy danh sách đơn hàng từ Supabase
 export const getOrders = async () => {
   const supabase = createClient();
 
@@ -16,7 +16,7 @@ export const getOrders = async () => {
 
   return data;
 };
-
+// Câp nhật trạng thái đơn hàng
 export const updateOrderStatus = async (orderId: number, status: string) => {
   const supabase = createClient();
 
@@ -31,7 +31,7 @@ export const updateOrderStatus = async (orderId: number, status: string) => {
 
   revalidatePath('/admin/orders');
 };
-
+// Lấy số lượng đơn hàng theo tháng
 export const getMonthlyOrders = async () => {
   const supabase = createClient();
   const { data, error } = await supabase.from('order').select('created_at');

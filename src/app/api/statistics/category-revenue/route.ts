@@ -7,11 +7,14 @@ export async function GET(req: Request) {
   // Lấy tất cả order_item của đơn hàng không bị hủy, kèm thông tin sản phẩm và danh mục
   const { data: orderItems, error } = await supabase
     .from('order_item')
-    .select('quantity, product:product(id, title, category(id, name), price), order:order(id, status)');
+    .select('quantity, product:product(id, title, category(id, name), price), order:order_id(id, status)');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log dữ liệu trả về từ Supabase
+  console.log('orderItems:', JSON.stringify(orderItems, null, 2));
 
   // Hàm loại bỏ dấu tiếng Việt
   function removeVietnameseTones(str: string) {
@@ -51,6 +54,9 @@ export async function GET(req: Request) {
     product.total += price * qty;
     product.quantity += qty;
   }
+
+  // Log dữ liệu group để debug
+  console.log('categoryRevenue:', JSON.stringify(categoryRevenue, null, 2));
 
   return NextResponse.json({ categoryRevenue });
 } 

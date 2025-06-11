@@ -65,11 +65,23 @@ export default function StatisticsPage() {
       .then(data => {
         let chartData = [];
         if (period === 'month') {
-          chartData = Object.entries(data.byMonth || {}).map(([name, revenue]) => ({ name, revenue }));
+          chartData = Object.entries(data.byMonth || {}).map(([name, revenue]) => ({
+            name,
+            revenue,
+            quantity: data.quantityByMonth?.[name] || 0
+          }));
         } else if (period === 'quarter') {
-          chartData = Object.entries(data.byQuarter || {}).map(([name, revenue]) => ({ name, revenue }));
+          chartData = Object.entries(data.byQuarter || {}).map(([name, revenue]) => ({
+            name,
+            revenue,
+            quantity: data.quantityByQuarter?.[name] || 0
+          }));
         } else {
-          chartData = Object.entries(data.byYear || {}).map(([name, revenue]) => ({ name, revenue }));
+          chartData = Object.entries(data.byYear || {}).map(([name, revenue]) => ({
+            name,
+            revenue,
+            quantity: data.quantityByYear?.[name] || 0
+          }));
         }
         setRevenueData(chartData);
         // Đơn hàng theo trạng thái - Gộp các trạng thái cùng nghĩa
@@ -162,7 +174,7 @@ export default function StatisticsPage() {
                         {payload.map((entry, idx) => {
                           const cat = entry.name;
                           const value = typeof entry.value === 'number' ? entry.value : 0;
-                          const quantity = data && data[cat + '_quantity'] ? data[cat + '_quantity'] : 0;
+                          const quantity = data && (data.quantity ?? 0);
                           return (
                             <div key={cat} style={{ color: entry.color }}>
                               <span>{cat} : {value.toLocaleString('vi-VN')} ₫</span>

@@ -4,7 +4,7 @@ import slugify from 'slugify';
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { orderItems, totalPrice, userId } = await req.json();
 
     // Kiểm tra số lượng sản phẩm trước khi tạo đơn hàng
